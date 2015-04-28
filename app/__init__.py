@@ -8,3 +8,5 @@ app = Flask(__name__)
 
 app.debug = True
 manager = Manager(app)
+
+from app import views
