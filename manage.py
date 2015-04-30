@@ -1,7 +1,8 @@
 from app import manager
 
+
 @manager.command
-def init(): 
+def init():
     print 'OK'
 
 if __name__ == '__main__':
