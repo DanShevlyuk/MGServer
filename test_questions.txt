@@ -1,0 +1,7 @@
+"Is X<=5?"
+"Is X>5?"
+"Is X even?"
+"Is X<=1?"
+"Is X<=7?"
+"Is X close to 5?"
+"Is X prime?"
