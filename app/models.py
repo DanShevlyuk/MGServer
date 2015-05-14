@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
 
+# -*- coding: utf-8 -*-
+from __future__ import division
 from enum import Enum
 from app import db
-from utils.math_methods import entropy, bayes, entropy_after_answer
+from utils.math_methods import entropy, entropy_after_answer
 from collections import OrderedDict
 import numpy
 
@@ -27,14 +28,28 @@ class Movie(db.Model):
     def __unicode__(self):
         return u"%s" % (self.name)
 
+    def probability(self):
+        return self.times_proposed / Game.__number_of_played_games__
+
 
 class Question(db.Model):
     __tablename__ = "question"
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Unicode(64), unique=False, nullable=False)
+    questions_stat = db.relationship("QuestionWithStat", backref="question")
 
     def __unicode__(self):
         return u"%s" % (self.text)
+
+    def getPQA(self):
+        pQA = [0., 0. ,0.]
+        for stat in self.questions_stat:
+            current_pX = (stat.movie.times_proposed / Game.__number_of_played_games__)
+            # current_pX = 0.1
+
+            pQA[0] += stat.getPForAns(Answers.YES) * current_pX
+            pQA[1] += stat.getPForAns(Answers.NO) * current_pX
+            pQA[2] += stat.getPForAns(Answers.I_DUNNO) * current_pX
 
 
 class QuestionWithStat(db.Model):
@@ -53,7 +68,7 @@ class QuestionWithStat(db.Model):
 
     def totalAnswers(self):
         return self.yes_answers + self.no_answers + \
-               self.havenoidea_answers + self.doesnotmakesense_answers
+               self.idunno_answers
 
     def getAnswersAsDict(self):
         d = {}
@@ -61,6 +76,20 @@ class QuestionWithStat(db.Model):
         d[Answers.NO] = self.no_answers
         d[Answers.I_DUNNO] = self.idunno_answers
         return d
+
+    def getPForAns(self, ans):
+        if self.totalAnswers() == 0:
+            return 1/3
+        else:
+            ans_stat = 0
+            if ans is Answers.YES:
+                ans_stat = self.yes_answers
+            elif ans is Answers.NO:
+                ans_stat = self.no_answers
+            elif ans is Answers.I_DUNNO:
+                ans_stat = self.idunno_answers
+
+            return ans_stat / self.totalAnswers()
 
 
 class AnswerQuestionPair(object):
@@ -84,6 +113,7 @@ class WhatMovieIsThat(Exception):
     def __str__(self):
         return "giveUp"
 
+
 class IKnow(Exception):
     def __init__(self, movie):
         self.movie = movie
@@ -100,120 +130,170 @@ class Game (db.Model):
     # movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=True)
     # answers = db.relationship("AQPairsStore", backref="game")
     X = None
-    answers = {}
+    answers = []
     elipson = 0.05
-    pX = []
+    pX = {}
+    last_pMQA = {}
 
     def __init__(self):
         self.questions_counter = 0
-        self.pX = numpy.ones(len(Movie.query.all()))
-        self.connections = {}
         self.questions = Question.query.all()
         for q in self.questions:
             db.session.expunge(q)
-
-        for q_id in [q.id for q in self.questions]:
-            q_stats = QuestionWithStat.query.filter_by(question_id=q_id)
-            self.connections[q_id] = [[], [], []]
-            for q_stat in q_stats:
-                total = q_stat.totalAnswers()
-                if total != 0:
-                    self.connections[q_id][0].append(q_stat.yes_answers / total)
-                    self.connections[q_id][1].append(q_stat.no_answers / total)
-                    self.connections[q_id][2].append(q_stat.idunno_answers / total)
-                else:
-                    self.connections[q_id][0].append(1/3)
-                    self.connections[q_id][1].append(1/3)
-                    self.connections[q_id][2].append(1/3)
-        r_con = []
-        for s in self.connections.items():
-            r_con.append(s)
 
         self.movies = Movie.query.all()
         for m in self.movies:
             db.session.expunge(m)
 
-        self.connections = r_con #yay!!
-        print "connections: %s" % self.connections
 
     def get_next_question(self):
-        if self.questions_counter < Game.__max_questions__:
+        # if self.questions_counter < Game.__max_questions__:
+        if self.questions_counter < 5:
             # self.pX = numpy.array([i.times_proposed for i in self.movies])
-            current_entropy = entropy(self.pX)
+            # pX = {}
+            if len(self.pX) == 0:
+                for m in Movie.query.all():
+                    self.pX[m.id] = m.probability()
+
+            print numpy.array(self.pX.values())
+            current_entropy = entropy(numpy.array(self.pX.values()))
             print "Entropy: " + str(current_entropy)
 
             for i, movie in enumerate(self.movies):
-                print "%s  %s" % (movie, self.pX[i])
+                print u"%s  %s   id: %s" % (movie, self.pX[movie.id], movie.id)
 
-            if current_entropy < 1 or self.questions_counter == Game.__max_questions__ - 1:
-                movie_index = self.pX.argmax()
-                raise IKnow(self.movies[movie_index])
-
+            if current_entropy < 1 or self.questions_counter == 5 - 1:  # Game.__max_questions__ - 1:
+                print "<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>"
+                movie_array_index = numpy.array(self.pX.values()).argmax()
+                # print "movie_id: %s" % movie_id
+                p_to_search = (self.pX.values())[movie_array_index]
+                movie = [m_id for m_id, p in self.pX.items() if p == p_to_search]
+                if movie:
+                    self.X = Movie.query.get(movie[0])
+                    print "movie: %s" % self.X
+                    raise IKnow(self.X)
+                else:
+                    print 'Shit!'
             else:
-
-                pQA = numpy.tensordot(self.connections, self.pX, 1)
-                print pQA
-                self.pMQA = bayes(self.connections, self.pX, pQA)
-
                 if numpy.random.random() < self.elipson:
                     print "Random Question:"
-                    q = numpy.random.randint(len(self.questions))
+                    qs = Question.query.all()
+                    return qs[numpy.random.randint(len(qs))]
                 else:
-                    entropys = entropy_after_answer(pQA, self.pMQA)
-                    for q in self.answers.keys():
-                        entropys[q] = numpy.inf
+                    pQA = self.getPQA(self.pX)
+                    # print "pQA: %s" % pQA
+                    pMQA = self.bayes(pQA)
+                    # print "pMQA: %s" % pMQA
+                    self.last_pMQA = pMQA
+
+                    entropys = entropy_after_answer(pQA, pMQA)
+                    print "entropys: %s" % entropys
+                    for q in self.answers:
+                        entropys[q.question.id - 1] = numpy.inf
                     q = entropys.argmin()
-                    self.last_q = q
                     print "Best Question: "
                 question_to_ask = self.questions[q]
-                return  question_to_ask
+                self.questions_counter += 1
+                return question_to_ask
         else:
             if self.X is None:
                 raise WhatMovieIsThat()
             else:
                 self.update(self.answers, self.movie)
 
-    def submit_next_answer(self, aq_pair):
-        self.answers[aq_pair.question.id] = numpy.zeros(self.max_answers)
-        if aq_pair.answer == Answers.YES:
-            a = 0
-        elif aq_pair.answer == Answers.NO:
-            a = 1
-        elif aq_pair.answer == Answers.I_DUNNO:
-            a = 2
 
-        self.answers[aq_pair.question.id][a] = 1
-        self.pX = self.P_XQA[:, self.last_q, a]
+    def bayes(self, pQA):
+        res = {}
+        for m in Movie.query.all():
+            question_dict = {}
+            for q_id, ps in pQA.iteritems():
+                a_to_append = [0, 0, 0]
+                qStat = QuestionWithStat.query.filter_by(movie_id=m.id, question_id=q_id).all()
+                if len(qStat) != 0:
+                    qStat = qStat[0]
+                    a_to_append[0] = qStat.getPForAns(Answers.YES)
+                    a_to_append[1] = qStat.getPForAns(Answers.NO)
+                    a_to_append[2] = qStat.getPForAns(Answers.I_DUNNO)
+                else:
+                    a_to_append = [1/3, 1/3, 1/3]
+
+                question_dict[q_id] = numpy.array(a_to_append)
+            res[m.id] = question_dict
+
+        return res
+
+    def getPQA(self, pX):
+        res = {}
+        for q in Question.query.all():
+            a_to_append = [0., 0. ,0.]
+            for stat in q.questions_stat:
+                # current_pX = (stat.movie.times_proposed / Game.__number_of_played_games__)
+                # current_pX = 0.1
+                current_pX = pX[stat.movie.id]
+
+                a_to_append[0] += stat.getPForAns(Answers.YES) * current_pX
+                a_to_append[1] += stat.getPForAns(Answers.NO) * current_pX
+                a_to_append[2] += stat.getPForAns(Answers.I_DUNNO) * current_pX
+
+            res[q.id] = numpy.array(a_to_append)
+
+        return res
+
+    def submit_next_answer(self, aq_pair):
+        self.answers.append(aq_pair)
+        q_index = 0
+        if aq_pair.answer == Answers.YES:
+            q_index = 0
+        elif aq_pair.answer == Answers.NO:
+            q_index = 1
+        elif aq_pair.answer == Answers.I_DUNNO:
+            q_index = 2
+
+        self.pX = {}
+        for m, qs in self.last_pMQA.iteritems():
+             self.pX[m] = qs[aq_pair.question.id][q_index]
+             print self.pX[m]
+
+        print self.pX
         print u"add %s to game" % (aq_pair)
 
-    def update(self, answers, item):
-        for q in answers.keys():
-            n = Game.__number_of_played_games__
-            self.connections[q, :, item] *= (n - 1.) / n
-            self.connections[q, :, item] += answers[q] / n
-            # self.item_frequencies *= (n - 1.) / n
-            self.item_frequencies[item] += 1. / n
+    def submit_final_answer(self, answer):
+        if answer == Answers.YES:
+            self.update(self.answers, self.X)
+        elif answer == Answers.NO:
+            self.questions_counter += 1
+            self.pX[self.X.id] = 0
+            self.X = None
 
-    # def try_to_guess(self):
-    #     movies = {}
-    #     for m in Movie.query.all():
-    #         movies[m.name] = str(self.countPWithActualAB(m, self.aq_pairs))
-    #
-    #     for k in movies:
-    #         print u"%s : %s" % (k, movies[k])
 
-    # def stop_with_answer(self, movie):
-    #     Game.__number_of_played_games__ += 1
-    #     for aqp in self.aq_pairs:
-    #         q_stat = [s for s in movie.questions_stat if s.question == aqp.question][0]
-    #         if q_stat != 0:
-    #             q_stat.incrementWithAnswer(aqp)
-    #         else:
-    #             q_stat = QuestionWithStat()
-    #             q_stat.question_id = aqp.question
-    #             q_stat.movie_id = movie
-    #             q_stat.incrementWithAnswer(aqp)
-    #             db.session.add(q_stat)
-    #             db.session.commit()
+    def update(self, answers, movie):
+        Game.__number_of_played_games__ += 1
+        movie.times_proposed += 1
+        for aq_pair in answers:
+            a = QuestionWithStat()
+            a.question_id = aq_pair.question.id
+            a.movie_id = movie.id
+            if aq_pair.answer == Answers.YES:
+                a.yes_answers += 1
+            elif aq_pair.answer == Answers.NO:
+                a.no_answers += 1
+            elif aq_pair.answer == Answers.I_DUNNO:
+                a.idunno_answers += 1
+
+            db.session.add(a)
+            db.session.commit()
+
+        db.session.add(movie)
+        db.session.commit()
+
+
+    def end_with_movie(self, movie_name):
+        movies = Movie.query.filter_by(name=movie_name).all()
+
+        if len(movies) == 0:
+            print 'omg! new movie.'
+        else:
+            self.update(self.answers, movies[0])
+
 
 
