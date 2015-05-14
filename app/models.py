@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 from __future__ import division
 from enum import Enum
@@ -31,6 +30,13 @@ class Movie(db.Model):
     def probability(self):
         return self.times_proposed / Game.__number_of_played_games__
 
+    def serialize(self):
+        return {
+            'id' : self.id,
+            'name': self.name,
+            'times_proposed': self.times_proposed
+        }
+
 
 class Question(db.Model):
     __tablename__ = "question"
@@ -50,6 +56,19 @@ class Question(db.Model):
             pQA[0] += stat.getPForAns(Answers.YES) * current_pX
             pQA[1] += stat.getPForAns(Answers.NO) * current_pX
             pQA[2] += stat.getPForAns(Answers.I_DUNNO) * current_pX
+
+    def serialize(self):
+        stat = self.questions_stat
+        total_answers = 0
+        for s in stat:
+            total_answers += s.totalAnswers()
+
+        return {
+            'id' : self.id,
+            'text': self.name,
+            'total_answers': total_answers
+        }
+
 
 
 class QuestionWithStat(db.Model):

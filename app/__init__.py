@@ -11,7 +11,7 @@ app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.debug = True
 
 from app.errors import page_not_found, service_unavailable
-# app.register_error_handler(404, page_not_found)
+#app.register_error_handler(404, page_not_found)
 app.register_error_handler(503, service_unavailable)
 
 manager = Manager(app)
