@@ -92,6 +92,10 @@ def get_all_movies():
 def get_all_questions():
     return jsonify(questions=[q.serialize() for q in Question.query.all()]), 200
 
+@app.route(PATH + 'get_active_sessions/', methods=['GET'])
+def get_active_sessions():
+    return jsonify(games=active_games.keys()), 200
+
 
 
 
