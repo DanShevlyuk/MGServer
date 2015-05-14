@@ -102,7 +102,7 @@ def kill_all_games():
     return 'ok!', 200
 
 @app.route(PATH + 'kill_game/', methods=['POST'])
-def kill_all_games():
+def kill_game():
     if not request.json or not ('game_id' in request.json):
         abort(400)
     del active_games[request.json['game_id']]
