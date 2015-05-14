@@ -96,6 +96,17 @@ def get_all_questions():
 def get_active_sessions():
     return jsonify(games=active_games.keys()), 200
 
+@app.route(PATH + 'kill_all_games/', methods=['POST'])
+def kill_all_games():
+    active_games.clear()
+    return 'ok!', 200
+
+@app.route(PATH + 'kill_game/', methods=['POST'])
+def kill_all_games():
+    if not request.json or not ('game_id' in request.json):
+        abort(400)
+    del active_games[request.json['game_id']]
+    return 'ok!', 200
 
 
 
