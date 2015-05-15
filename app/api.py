@@ -15,11 +15,11 @@ def start_new_game():
 
 
 class QuestionTypes(Enum):
-    COMMON = 'simple'
+    COMMON = 'common'
     FINAL = 'final'
     GIVE_UP = 'give_up'
 
-@app.route(PATH + 'get_next_question/', methods=['POST'])
+@app.route(PATH + 'get_next_question/', methods=['GET'])
 def get_next_question():
     print request.json
     if not request.json or not ('game_id' in request.json):
@@ -43,7 +43,7 @@ def get_next_question():
     return jsonify(question_type=QuestionTypes.COMMON.value, question=q.text, question_id=q.id), 200
 
 @app.route(PATH + 'submit_answer/', methods=['POST'])
-def submit_question():
+def submit_answer():
     if not request.json or not (('game_id' and 'answer' and 'question_type') in request.json):
         abort(400)
 
@@ -96,19 +96,14 @@ def get_all_questions():
 def get_active_sessions():
     return jsonify(games=active_games.keys()), 200
 
-@app.route(PATH + 'kill_all_games/', methods=['POST'])
+@app.route(PATH + 'kill_all_games/', methods=['DELETE'])
 def kill_all_games():
     active_games.clear()
     return 'ok!', 200
 
-@app.route(PATH + 'kill_game/', methods=['POST'])
+@app.route(PATH + 'kill_game/', methods=['DELETE'])
 def kill_game():
     if not request.json or not ('game_id' in request.json):
         abort(400)
     del active_games[request.json['game_id']]
     return 'ok!', 200
-
-
-
-
-
