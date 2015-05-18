@@ -6,6 +6,9 @@ from utils.math_methods import entropy, entropy_after_answer
 from collections import OrderedDict
 import numpy
 import operator
+# import psyco
+
+# psyco.jit()
 
 
 class Answers(Enum):
@@ -134,6 +137,8 @@ class IKnow(Exception):
         return u'Вы загадывали - "%s"?' % (Movie.quesry.get(self.movie_list[0]))
 
 
+# psyco.bind(Game)
+
 class Game (object):
     # __tablename__ = "game"
     __number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
@@ -168,23 +173,23 @@ class Game (object):
     def get_next_question(self):
         # if self.questions_counter < Game.__max_questions__:
         current_entropy = entropy(numpy.array(self.pX.values()))
-        print "Entropy: " + str(current_entropy)
+        # print "Entropy: " + str(current_entropy)
 
-        for i, movie in enumerate(Movie.query.all()):
-            print u"%s  %s" % (movie, self.pX[movie.id])
+        # for i, movie in enumerate(Movie.query.all()):
+        #     print u"%s  %s" % (movie, self.pX[movie.id])
 
-        # if current_entropy < 1 or self.questions_counter == Game.__max_questions__:
-        if current_entropy < 1 or self.questions_counter == len(Question.query.all()) - 1:
-            print "<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>"
+        if current_entropy < 1 or self.questions_counter == Game.__max_questions__:
+        # if current_entropy < 1 or self.questions_counter == len(Question.query.all()) - 1:
+        #     print "<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>"
             sorted_pX = sorted(self.pX.items(), key=operator.itemgetter(1), reverse=True)
             sorted_pX = [sorted_pX[i][0] for i in xrange(len(sorted_pX))]
             self.X = sorted_pX[0]
-            print sorted_pX
-            raise IKnow(sorted_pX)
+            # print sorted_pX
+            raise IKnow(sorted_pX[10:])
 
         else:
             if numpy.random.random() < self.elipson:
-                print "Random Question:"
+                # print "Random Question:"
                 qs = Question.query.all()
                 qs = [q for q in qs if not (q.id in self.answers.keys())]
                 self.questions_counter += 1
@@ -195,15 +200,13 @@ class Game (object):
                 self.last_pMQA = pMQA
 
                 entropys = entropy_after_answer(pQA, pMQA)
-                print "entropys: %s" % entropys
                 for q in self.answers.keys():
                     entropys[q - 1] = numpy.inf
-                print "entropys with infs: %s" % entropys
+
                 q = entropys.argmin()
-                print "Best Question: "
+                # print "Best Question: "
                 question_to_ask = Question.query.get(q+1)
                 self.questions_counter += 1
-                print u"question: %s" % question_to_ask
                 return question_to_ask
         # else:
         #     if self.X is None:
@@ -211,22 +214,21 @@ class Game (object):
         #     else:
         #         self.update(self.answers, self.X)
 
-
     def bayes(self, pQA):
         res = {}
         for m in Movie.query.all():
             question_dict = {}
             for q_id, ps in pQA.iteritems():
-                a_to_append = [0, 0, 0]
+                a_to_append = numpy.zeros(3)
                 qStat = QuestionWithStat.query.filter_by(movie_id=m.id, question_id=q_id).first()
                 if qStat:
                     a_to_append[0] = qStat.getPForAns(Answers.YES)
                     a_to_append[1] = qStat.getPForAns(Answers.NO)
                     a_to_append[2] = qStat.getPForAns(Answers.I_DUNNO)
                 else:
-                    a_to_append = [1/3, 1/3, 1/3]
+                    a_to_append = numpy.array([1/3, 1/3, 1/3])
 
-                question_dict[q_id] = numpy.array(a_to_append)
+                question_dict[q_id] = a_to_append
             res[m.id] = question_dict
 
         return res
@@ -234,17 +236,15 @@ class Game (object):
     def getPQA(self):
         res = {}
         for q in Question.query.all():
-            a_to_append = [0., 0., 0.]
+            a_to_append = numpy.zeros(3)
             for stat in q.questions_stat:
-                # current_pX = (stat.movie.times_proposed / Game.__number_of_played_games__)
-                # current_pX = 0.1
                 current_pX = self.pX[stat.movie.id]
 
                 a_to_append[0] += stat.getPForAns(Answers.YES) * current_pX
                 a_to_append[1] += stat.getPForAns(Answers.NO) * current_pX
                 a_to_append[2] += stat.getPForAns(Answers.I_DUNNO) * current_pX
 
-            res[q.id] = numpy.array(a_to_append)
+            res[q.id] = a_to_append
 
         return res
 
