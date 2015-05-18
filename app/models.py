@@ -69,7 +69,7 @@ class Question(db.Model):
 
         return {
             'id' : self.id,
-            'text': self.name,
+            'text': self.text,
             'total_answers': total_answers
         }
 
