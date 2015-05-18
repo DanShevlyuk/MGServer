@@ -15,7 +15,9 @@ from app.errors import page_not_found, service_unavailable
 app.register_error_handler(503, service_unavailable)
 
 manager = Manager(app)
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, session_options={
+    'expire_on_commit': False
+})
 
 API_VERSION_MAJOR = 1
 API_VERSION_MINOR = 0
