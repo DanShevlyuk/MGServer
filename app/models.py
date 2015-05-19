@@ -142,7 +142,7 @@ class IKnow(Exception):
 class Game (object):
     # __tablename__ = "game"
     __number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
-    __max_questions__ = 20
+    __max_questions__ = 4
     # id = db.Column(db.Integer, primary_key=True)
     # movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=True)
     # answers = db.relationship("AQPairsStore", backref="game")
@@ -185,7 +185,7 @@ class Game (object):
             sorted_pX = [sorted_pX[i][0] for i in xrange(len(sorted_pX))]
             self.X = sorted_pX[0]
             # print sorted_pX
-            raise IKnow(sorted_pX[10:])
+            raise IKnow(sorted_pX)
 
         else:
             if numpy.random.random() < self.elipson:
