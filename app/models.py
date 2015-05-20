@@ -3,19 +3,13 @@ from __future__ import division
 from enum import Enum
 from app import db
 from utils.math_methods import entropy, entropy_after_answer
-from collections import OrderedDict
 import numpy
 import operator
-# import psyco
-
-# psyco.jit()
-
 
 class Answers(Enum):
     YES = 'yes'
     NO = 'no'
     I_DUNNO = 'I dunno'
-
 
 class Movie(db.Model):
     __tablename__ = "movie"
@@ -55,7 +49,6 @@ class Question(db.Model):
         pQA = [0., 0. ,0.]
         for stat in self.questions_stat:
             current_pX = (stat.movie.times_proposed / Game.__number_of_played_games__)
-            # current_pX = 0.1
 
             pQA[0] += stat.getPForAns(Answers.YES) * current_pX
             pQA[1] += stat.getPForAns(Answers.NO) * current_pX
@@ -123,11 +116,6 @@ class AnswerQuestionPair(object):
     def __unicode__(self):
         return u"'%s' >>> %s" % (Question.query.get(self.question_id), self.answer)
 
-#
-# class WhatMovieIsThat(Exception):
-#     def __str__(self):
-#         return "giveUp"
-
 
 class IKnow(Exception):
     def __init__(self, m_list):
@@ -137,15 +125,9 @@ class IKnow(Exception):
         return u'"%s"?' % (Movie.quesry.get(self.movie_list[0]))
 
 
-# psyco.bind(Game)
-
 class Game (object):
-    # __tablename__ = "game"
     __number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
-    __max_questions__ = 5
-    # id = db.Column(db.Integer, primary_key=True)
-    # movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=True)
-    # answers = db.relationship("AQPairsStore", backref="game")
+    __max_questions__ = 15
     X = None
     answers = {}
     pX = {}
@@ -171,25 +153,16 @@ class Game (object):
 
 
     def get_next_question(self):
-        # if self.questions_counter < Game.__max_questions__:
         current_entropy = entropy(numpy.array(self.pX.values()))
-        # print "Entropy: " + str(current_entropy)
-
-        for i, movie in enumerate(Movie.query.all()):
-            print u"%s  %s" % (movie, self.pX[movie.id])
 
         if current_entropy < 1 or self.questions_counter == Game.__max_questions__:
-        # if current_entropy < 1 or self.questions_counter == len(Question.query.all()) - 1:
-        #     print "<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>"
             sorted_pX = sorted(self.pX.items(), key=operator.itemgetter(1), reverse=True)
             sorted_pX = [sorted_pX[i][0] for i in xrange(len(sorted_pX))]
             self.X = sorted_pX[0]
-            # print sorted_pX
             raise IKnow(sorted_pX)
 
         else:
             if numpy.random.random() < self.elipson:
-                # print "Random Question:"
                 qs = Question.query.all()
                 qs = [q for q in qs if not (q.id in self.answers.keys())]
                 self.questions_counter += 1
@@ -204,15 +177,9 @@ class Game (object):
                     entropys[q - 1] = numpy.inf
 
                 q = entropys.argmin()
-                # print "Best Question: "
                 question_to_ask = Question.query.get(q+1)
                 self.questions_counter += 1
                 return question_to_ask
-        # else:
-        #     if self.X is None:
-        #         raise WhatMovieIsThat()
-        #     else:
-        #         self.update(self.answers, self.X)
 
     def bayes(self, pQA):
         res = {}
@@ -262,16 +229,9 @@ class Game (object):
         for m, qs in self.last_pMQA.iteritems():
              self.pX[m] = qs[aq_pair.question_id][q_index]
 
-
     def submit_final_answer(self, movie_id, answer):
         if answer == Answers.YES:
             self.update(self.answers, movie_id)
-        # elif answer == Answers.NO:
-        #     #==========================================================================================
-        #     self.questions_counter += 1
-        #     self.pX[self.X.id] = 0
-        #     self.X = None
-
 
     def update(self, answers, movie_id):
         Game.__number_of_played_games__ += 1
@@ -297,5 +257,3 @@ class Game (object):
         movie = Movie.query.get(movie_id)
         if movie:
             self.update(self.answers, movie_id)
-
-

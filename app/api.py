@@ -17,9 +17,6 @@ def start_new_game():
         return jsonify(game_id=new_game_id,
                        question_type=QuestionTypes.FINAL.value,
                        movies=[m.serialize() for m in e.movie_list]), 200
-    # except WhatMovieIsThat as e:
-    #     return jsonify(game_id=new_game_id, question_type=QuestionTypes.GIVE_UP.value), 200
-
 
     return jsonify(game_id=new_game_id,
                    question=q.text,
@@ -30,17 +27,13 @@ def start_new_game():
 class QuestionTypes(Enum):
     COMMON = 'common'
     FINAL = 'final'
-    # GIVE_UP = 'give_up'
 
-# @app.route(PATH + 'get_next_question/', methods=['GET'])
 def get_next_question(game):
     try:
         question = game.get_next_question()
     except IKnow as e:
         return jsonify(question_type=QuestionTypes.FINAL.value,
                        movies=[Movie.query.get(m).serialize() for m in e.movie_list]), 200
-    # except WhatMovieIsThat as e:
-    #     return jsonify(question_type=QuestionTypes.GIVE_UP.value), 200
 
     return jsonify(question_type=QuestionTypes.COMMON.value, question=question.text, question_id=question.id), 200
 
@@ -66,16 +59,7 @@ def submit_answer():
             game.submit_final_answer(Answers .NO)
         else:
             abort(400)
-    # elif question_type == QuestionTypes.GIVE_UP.value:
-    #     if answer != '':
-    #         movies = Movie.query.all()
-    #         movies_from_base = [m for m in movies if m.name.lower() == answer.lower()]
-    #
-    #         if len(movies_from_base):
-    #             game.end_with_movie(movies_from_base[0].name)
-    #             return jsonify(message='anther game done!'), 200
-    #         else:
-    #             print 'omg! new movie: %s' % answer
+
     elif question_type == QuestionTypes.COMMON.value:
         question_id = request.json['question_id']
         q = Question.query.get(question_id)

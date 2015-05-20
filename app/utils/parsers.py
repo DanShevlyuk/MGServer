@@ -1,4 +1,3 @@
-# from models import questions_stat
 from utils import UnicodeReader
 from app.models import Movie, Question
 from app import db

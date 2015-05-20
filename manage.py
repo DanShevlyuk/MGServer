@@ -1,4 +1,4 @@
-from app import manager, db
+from app import manager
 from app.utils.parsers import *
 
 @manager.command

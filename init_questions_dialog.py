@@ -2,7 +2,6 @@
 # dict = {}
 
 from app.utils.parsers import *
-from app import db
 from random import randint
 from app.models import *
 
@@ -47,15 +46,10 @@ for movie in movies:
             continue
 
 
-# string_dict = str(dict)
+string_dict = str(dict)
 
-# print string_dict
-#
-# with open('string_dict.txt', 'w') as fp:
-#     fp.write(string_dict)
-#
+print string_dict
 
-
-
-
+with open('string_dict.txt', 'w') as fp:
+    fp.write(string_dict)
 
