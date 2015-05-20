@@ -4,41 +4,56 @@
 from app.utils.parsers import *
 from app import db
 from random import randint
+from app.models import *
 
 db.drop_all()
 db.create_all()
 questions_parse("questions.txt")
-movies_parse("movies_list.csv")
+movies_parse("movies.txt")
 
-movies  = Movie.query.all()
+movies = Movie.query.all()
 questions = Question.query.all()
 
 for movie in movies:
-    dict[movie.name] = {}
     for question in questions:
-        ans = raw_input(u"[%s] %s : " % (unicode(movie.name), unicode(question.text)))
-        if ans == 'skip':
+        ans = raw_input(u"[%s] %s : " % (movie.name, question.text))
+        if ans == 's':
             continue
 
-        dict[movie.name][question.text] = {"yes": 0, "no": 0, "idunno": 0}
+        qStat = QuestionWithStat()
+        qStat.movie = movie
+        qStat.question = question
 
-        if ans == "yes":
-            dict[movie.name][question.text] = {"yes": randint(15, 20), "no": randint(0, 3), "idunno": randint(0, 5)}
-        elif ans == "no":
-            dict[movie.name][question.text] = {"yes": randint(0, 3), "no": randint(15, 20), "idunno": randint(0, 5)}
-        elif ans == "idunno":
-            dict[movie.name][question.text] = {"yes": randint(0, 3), "no": randint(0, 3), "idunno": randint(8, 12)}
+        if ans == "y":
+            qStat.yes_answers = randint(15, 20)
+            qStat.no_answers = randint(0, 3)
+            qStat.idunno_answers = randint(0, 5)
+            db.session.add(qStat)
+            db.session.commit()
+
+        elif ans == "n":
+            qStat.yes_answers = randint(0, 3)
+            qStat.no_answers = randint(15, 20)
+            qStat.idunno_answers = randint(0, 5)
+            db.session.add(qStat)
+            db.session.commit()
+        elif ans == "i":
+            qStat.yes_answers = randint(0, 3)
+            qStat.no_answers = randint(0, 3)
+            qStat.idunno_answers = randint(7, 12)
+            db.session.add(qStat)
+            db.session.commit()
         else:
-            dict[movie.name][question.text] = {"yes": randint(0, 5), "no": randint(0, 5), "idunno": randint(6, 9)}
+            continue
 
 
-string_dict = str(dict)
+# string_dict = str(dict)
 
-print string_dict
-
-with open('string_dict.txt', 'w') as fp:
-    fp.write(string_dict)
-
+# print string_dict
+#
+# with open('string_dict.txt', 'w') as fp:
+#     fp.write(string_dict)
+#
 
 
 

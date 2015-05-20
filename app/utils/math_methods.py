@@ -30,16 +30,16 @@ def entropy(Ps):
 
 
 def entropy_after_answer(P_QA, P_XQA):
-    pQA = []
+    pQA = numpy.array(P_QA.values())
 
-    for p in P_QA.values():
-        pQA.append(p)
+    # for p in P_QA.values():
+    #     pQA.append(p)
 
     pXQA = []
     for q in P_XQA.itervalues():
-        next_stuff = []
-        for p in q.itervalues():
-            next_stuff.append(p)
-        pXQA.append(next_stuff)
+        next_stuff = numpy.array(q.values())
+        # for p in q.itervalues():
+        #     next_stuff.append(p)
+        pXQA = numpy.append(pXQA, next_stuff)
 
-    return sum((numpy.array(pQA) * entropy(numpy.array(pXQA))).transpose())
+    return sum((pQA * entropy(pXQA)).transpose())

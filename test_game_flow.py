@@ -5,11 +5,12 @@ import numpy
 
 print "Start new game!"
 
-URL = "http://127.0.0.1:5000/api/v1.0/"
+URL = "http://188.226.233.9/api/v1.0/"
 
 r = requests.get(URL + 'start_new_game/')
-
+print r.status_code
 if r.status_code == 200:
+    print 'here we are!'
     print r.json()
     game_id = r.json()['game_id']
 

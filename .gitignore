@@ -4,3 +4,5 @@
 v/
 *.sqlite
 logs/
+.DS_Store
+*.zip

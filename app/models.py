@@ -134,7 +134,7 @@ class IKnow(Exception):
         self.movie_list = m_list
 
     def __str__(self):
-        return u'Вы загадывали - "%s"?' % (Movie.quesry.get(self.movie_list[0]))
+        return u'"%s"?' % (Movie.quesry.get(self.movie_list[0]))
 
 
 # psyco.bind(Game)
@@ -142,7 +142,7 @@ class IKnow(Exception):
 class Game (object):
     # __tablename__ = "game"
     __number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
-    __max_questions__ = 4
+    __max_questions__ = 5
     # id = db.Column(db.Integer, primary_key=True)
     # movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=True)
     # answers = db.relationship("AQPairsStore", backref="game")
@@ -175,8 +175,8 @@ class Game (object):
         current_entropy = entropy(numpy.array(self.pX.values()))
         # print "Entropy: " + str(current_entropy)
 
-        # for i, movie in enumerate(Movie.query.all()):
-        #     print u"%s  %s" % (movie, self.pX[movie.id])
+        for i, movie in enumerate(Movie.query.all()):
+            print u"%s  %s" % (movie, self.pX[movie.id])
 
         if current_entropy < 1 or self.questions_counter == Game.__max_questions__:
         # if current_entropy < 1 or self.questions_counter == len(Question.query.all()) - 1:
