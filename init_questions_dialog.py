@@ -14,9 +14,7 @@ questions = Question.query.all()
 
 for movie in movies:
     for question in questions:
-	print "%s" % movie.name.decode('utf-8')
-	print question.text
-        ans = raw_input()
+        ans = raw_input("[%s]  %s : " % (movie.name.encode('utf-8'), question.text.encode('utf-8')))
         if ans == 's':
             continue
 
@@ -47,10 +45,10 @@ for movie in movies:
             continue
 
 
-string_dict = str(dict)
+#string_dict = str(dict)
 
-print string_dict
+#print string_dict
 
-with open('string_dict.txt', 'w') as fp:
-    fp.write(string_dict)
+#with open('string_dict.txt', 'w') as fp:
+ #   fp.write(string_dict)
 

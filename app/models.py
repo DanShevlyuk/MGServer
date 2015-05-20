@@ -136,7 +136,7 @@ class Game (object):
 
     def __init__(self):
 	if Game.__number_of_played_games__ == 0:
-	   Game.__number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
+	    Game.__number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
 
         self.questions_counter = 0
         self.answers = {}
