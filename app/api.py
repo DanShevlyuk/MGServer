@@ -99,15 +99,21 @@ def kill_game():
 def submit_new_movie():
     if not request.json or not ('movie_name' in request.json):
         abort(400)
-
-    print request.json['movie_name']
+    text = request.json['movie_name']
+    f = open('nMovies.txt', 'w')
+    f.write(text)
+    f.close()
 
 @app.route(PATH + 'submit_new_question/', methods=['POST'])
 def submit_new_question():
     if not request.json or not ('question' in request.json):
         abort(400)
 
-    print request.json['question']
+    text = request.json['question']
+    f = open('nQuestions.txt', 'w')
+    f.write(text)
+    f.close()
+
 
 @app.route(PATH + 'report/', methods=['POST'])
 def report():
