@@ -2,3 +2,7 @@
 [2015-04-29 05:58:29 +0000] [10766] [INFO] Listening at: http://127.0.0.1:8000 (10766)
 [2015-04-29 05:58:29 +0000] [10766] [INFO] Using worker: sync
 [2015-04-29 05:58:29 +0000] [10771] [INFO] Booting worker with pid: 10771
+[2015-05-20 12:59:15 +0000] [17687] [INFO] Starting gunicorn 19.3.0
+[2015-05-20 12:59:15 +0000] [17687] [INFO] Listening at: http://127.0.0.1:8000 (17687)
+[2015-05-20 12:59:15 +0000] [17687] [INFO] Using worker: sync
+[2015-05-20 12:59:15 +0000] [17692] [INFO] Booting worker with pid: 17692

@@ -3,6 +3,6 @@
 *.swp
 v/
 *.sqlite
-logs/
+logs/*
 .DS_Store
 *.zip

@@ -5,22 +5,18 @@ from app.utils.parsers import *
 
 db.drop_all()
 db.create_all()
-questions_parse("test_questions.txt")
-movies_parse("test_movies.txt")
+questions_parse("questions.txt")
+movies_parse("movies.txt")
 
 movies = Movie.query.all()
 questions = Question.query.all()
 
-for m in init_stat.keys():
-    for q in init_stat[m].keys():
-        qStat = QuestionWithStat()
-        qStat.movie = Movie.query.filter_by(name=m).all()[0]
-        qStat.question = Question.query.filter_by(text=q).all()[0]
-        qStat.yes_answers = int(init_stat[m][q]['yes'])
-        qStat.no_answers = int(init_stat[m][q]['no'])
-        qStat.idunno_answers = int(init_stat[m][q]['idunno'])
-        db.session.add(qStat)
-        db.session.commit()
-
+for m_id, stat in init_stat.iteritems():
+    qStat = QuestionWithStat()
+    qStat.movie_id = m_id
+    qStat.question_id = stat['question_id']
+    qStat.yes_answers = stat['yes_answers']
+    qStat.no_answers = stat['no_answers']
+    qStat.idunno_answers = stat['idunno_answers']
 
 

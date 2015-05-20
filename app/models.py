@@ -126,7 +126,7 @@ class IKnow(Exception):
 
 
 class Game (object):
-    __number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
+    __number_of_played_games__ = 0
     __max_questions__ = 15
     X = None
     answers = {}
@@ -135,6 +135,9 @@ class Game (object):
     last_pMQA = {}
 
     def __init__(self):
+	if Game.__number_of_played_games__ == 0:
+	   Game.__number_of_played_games__ = sum([m.times_proposed for m in Movie.query.all()])
+
         self.questions_counter = 0
         self.answers = {}
         self.pX = {}

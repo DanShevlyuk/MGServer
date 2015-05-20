@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # dict = {}
 
 from app.utils.parsers import *
@@ -15,7 +14,9 @@ questions = Question.query.all()
 
 for movie in movies:
     for question in questions:
-        ans = raw_input(u"[%s] %s : " % (movie.name, question.text))
+	print "%s" % movie.name.decode('utf-8')
+	print question.text
+        ans = raw_input()
         if ans == 's':
             continue
 
